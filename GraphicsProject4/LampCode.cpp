@@ -117,31 +117,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		mat4x4_look_at(viewMatrix, vec3{ 0.0f, 0.0f, 1.0f }, vec3{ 0.0f, 0.0f, 0.0f }, vec3{ 0.0f, 1.0f, 0.0f });
 #endif
 	}
-	/*
-	 * The following keys control the lamp -- you should probably remove them from
-	 * the skeleton code.  A and S control the lower arm, 
-	 *                     Q and W control the upper arm,
-	 *                     C and V control the lamp head.
-	 *                     M is used to toggle the base's motion on and off.
-	 */
-	//else if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-	//	lowerArmObject->rotate(10.0f, 0.0f, 0.0f, 1.0f);
-	//}
-	//else if (key == GLFW_KEY_S && action == GLFW_PRESS) {
-	//	lowerArmObject->rotate(-10.0f, 0.0f, 0.0f, 1.0f);
-	//}
-	//else if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-	//	upperArmObject->rotate(10.0f, 0.0f, 0.0f, 1.0f);
-	//}
-	//else if (key == GLFW_KEY_W && action == GLFW_PRESS) {
-	//	upperArmObject->rotate(-10.0f, 0.0f, 0.0f, 1.0f);
-	//}
-	//else if (key == GLFW_KEY_C && action == GLFW_PRESS) {
-	//	lampObject->rotate(10.0f, 0.0f, 0.0f, 1.0f);
-	//}
-	//else if (key == GLFW_KEY_V && action == GLFW_PRESS) {
-	//	lampObject->rotate(-10.0f, 0.0f, 0.0f, 1.0f);
-	//}
 	else if (key == GLFW_KEY_M && action == GLFW_PRESS) {
 		motionOn = !motionOn;
 	}
@@ -285,7 +260,7 @@ void buildObjects() {
  */
 HierarchicalObject* pelvis, * upperLeftLeg, * upperRightLeg, * lowerLeftLeg, * lowerRightLeg, * leftFoot, * rightFoot, * upperBody;
 void buildSkeleton() {
-	string inputFiles[] = { "objects/pelvis.obj", "objects/limb20.obj", "objects/limb20.obj", "objects/limb20.obj", "objects/limb20.obj", "objects/foot.obj", "objects/foot.obj" };
+	string inputFiles[] = { "objects/pelvis.obj", "objects/limb20.obj", "objects/limb20.obj", "objects/limb20.obj", "objects/limb20.obj", "objects/foot.obj", "objects/foot.obj", "objects/upperBody.obj" };
 
 
 	GLfloat* verticesBase;
@@ -317,7 +292,7 @@ void buildSkeleton() {
 	lowerRightLeg = new HierarchicalObject(programID, vertexBuffers[4], arrayBuffers[4], nbrTriangles[4]*3);
 	leftFoot = new HierarchicalObject(programID, vertexBuffers[5], arrayBuffers[5], nbrTriangles[5] * 3);
 	rightFoot = new HierarchicalObject(programID, vertexBuffers[6], arrayBuffers[6], nbrTriangles[6] * 3);
-
+	upperBody = new HierarchicalObject(programID, vertexBuffers[7], arrayBuffers[7], nbrTriangles[7] * 3);
 	connectSkeleton();
 }
 
@@ -329,6 +304,7 @@ void connectSkeleton()
 {
 	pelvis->add(upperLeftLeg);
 	pelvis->add(upperRightLeg);
+	pelvis->add(upperBody);
 	upperLeftLeg->add(lowerLeftLeg);
 	upperRightLeg->add(lowerRightLeg);
 	lowerLeftLeg->add(leftFoot);
@@ -346,7 +322,7 @@ void connectSkeleton()
  * says hip but it is the pelvis.  
  */
 void hipMotion(float t, float &translationX, float &translationY, float &translationZ, float &rotationX, float &rotationY, float &rotationZ) {
-	static float tilt[] = { 12.5, 12.0, 11.0, 13.0, 14.0, 13.0, 11.0, 11.0, 12.5, 14.0, 12.5 };
+	static float tilt[] = { -12.5, -12.0, -11.0, -13.0, -14.0, -13.0, -11.0, -11.0, -12.5, -14.0, -12.5 };
 	static float rotation[] =  { 7.0, 5.0, 3.5, 3.5, -1.0, -7.0, -5.0, -4.0, -4.0, 1.0, 7.0 };
 	static float obliquity[] = { 1.0, 5.0, 6.0, 1.0, 0.0, -2.0, -5.0, -6.0, -2.0, 0.0, 1.0 };
 	int index = t * 10.0f;
@@ -398,6 +374,65 @@ void rightUpperLegMotion(float t, float& translationX, float& translationY, floa
 	return;
 }
 
+void rightKneeMotion(float t, float& translationX, float& translationY, float& translationZ, float& rotationX, float& rotationY, float& rotationZ) {
+	static float flexion[] = { 0.0f, -20.0f, -20.0f, -10.0f, 0.0f, -10.0f, -35.0f, -60.0f, -55.0f, -20.0f,0.0f };
+	static float adduction[] = { 2.0f, 5.0f, 2.5f, 2.0f, 2.0f, 0.0f, -2.0f, -5.0f, 0.0f, 2.5f, 2.0f };
+	static float intext[] = { -23.0f, -20.0f, -17.0f, -12.50f, -10.0f, -7.0f, -16.0f, -16.0f, -20.0f, -24.0,-23.0f };
+	t = t + 0.5f;
+	if (t >= 1.0f) {
+		t = t - 1.0f;
+	}
+	int index = t * 10.0f;
+	float value = t * 10.0f - index;
+	auto interpolate = [](int index, float value, auto table) { return table[index] + value * (table[index + 1] - table[index]); };
+	rotationX = interpolate(index, value, flexion);
+	rotationY = interpolate(index, value, intext);
+	rotationZ = interpolate(index, value, adduction);
+	translationX = translationY = translationZ = 0.0f;
+}
+
+void leftKneeMotion(float t, float& translationX, float& translationY, float& translationZ, float& rotationX, float& rotationY, float& rotationZ) {
+	static float flexion[] = { 0.0f, -20.0f, -20.0f, -10.0f, 0.0f, -10.0f, -35.0f, -60.0f, -55.0f, -20.0f,0.0f };
+	static float adduction[] = { 2.0f, 5.0f, 2.5f, 2.0f, 2.0f, 0.0f, -2.0f, -5.0f, 0.0f, 2.5f, 2.0f };
+	static float intext[] = { -23.0f, -20.0f, -17.0f, -12.50f, -10.0f, -7.0f, -16.0f, -16.0f, -20.0f, -24.0,-23.0f };
+
+	int index = t * 10.0f;
+	float value = t * 10.0f - index;
+	auto interpolate = [](int index, float value, auto table) { return table[index] + value * (table[index + 1] - table[index]); };
+	rotationX = interpolate(index, value, flexion);
+	rotationY = interpolate(index, value, intext);
+	rotationZ = interpolate(index, value, adduction);
+	translationX = translationY = translationZ = 0.0f;
+}
+void rightAnkleMotion(float t, float& translationX, float& translationY, float& translationZ, float& rotationX, float& rotationY, float& rotationZ) {
+	static float flexion[] = { 3.0f, 0.0f, 7.0f, 8.5f, 10.0f, 5.0f, -12.0f, -4.0f, 5.0f, 4.0f, 3.0f };
+	static float adduction[] = { 7.0f, 2.0f, 0.0f, 2.0f, 4.0f, 8.0f, 12.0f, 5.0f, 4.0f, 3.0f, 7.0f };
+	static float intext[] = { 10.0f, 4.0f, 6.0f,6.5f, 7.0f, 10.0f, 20.0f, 10.0f, 12.0f, 9.0f, 10.0f };
+	t = t + 0.5f;
+	if (t >= 1.0f) {
+		t = t - 1.0f;
+	}
+	int index = t * 10.0f;
+	float value = t * 10.0f - index;
+	auto interpolate = [](int index, float value, auto table) { return table[index] + value * (table[index + 1] - table[index]); };
+	rotationX = interpolate(index, value, flexion);
+	rotationY = interpolate(index, value, intext);
+	rotationZ = interpolate(index, value, adduction);
+	translationX = translationY = translationZ = 0.0f;
+}
+void leftAnkleMotion(float t, float& translationX, float& translationY, float& translationZ, float& rotationX, float& rotationY, float& rotationZ) {
+	static float flexion[] = { 3.0f, 0.0f, 7.0f, 8.5f, 10.0f, 5.0f, -12.0f, -4.0f, 5.0f, 4.0f, 3.0f };
+	static float adduction[] = { 7.0f, 2.0f, 0.0f, 2.0f, 4.0f, 8.0f, 12.0f, 5.0f, 4.0f, 3.0f, 7.0f };
+	static float intext[] = { 10.0f, 4.0f, 6.0f,6.5f, 7.0f, 10.0f, 20.0f, 10.0f, 12.0f, 9.0f, 10.0f };
+
+	int index = t * 10.0f;
+	float value = t * 10.0f - index;
+	auto interpolate = [](int index, float value, auto table) { return table[index] + value * (table[index + 1] - table[index]); };
+	rotationX = interpolate(index, value, flexion);
+	rotationY = interpolate(index, value, intext);
+	rotationZ = interpolate(index, value, adduction);
+	translationX = translationY = translationZ = 0.0f;
+}
 /*
  * This is code shared in common to build vertex array objects
  * and buffer array objects for the program.  
@@ -498,7 +533,7 @@ void init(string vertexShader, string fragmentShader) {
 	 *  This initializes either the skeleton or objects depending on what
 	 *  is commented out.  The Objects is the lamp we demonstrated in class.
 	 */
-	//buildObjects();
+//	buildObjects();
 	buildSkeleton();
 	getLocations();
 
@@ -550,10 +585,16 @@ void displayDirectional() {
 	glUniform3fv(directionalLightDirectionLoc, 1, directionalLightDirection);
 	glUniform3fv(directionalLightColorLoc, 1, directionalLightColor);
 	glUniform3fv(halfVectorLocation, 1, halfVector);
+
 	if (motionOn) {
-		updateJointPositions();
+//		BaseObject->clearCurrentTransform();
+// 		BaseObject->translate(3.0f * sin(t * 2 * 3.14159),
+//			0.0f,
+//			2.0 * cos(t * 2 * 3.14159));
+    	updateJointPositions();
 	}
-	pelvis->display(projectionMatrix, viewMatrix, rotation);
+	    pelvis->display(projectionMatrix, viewMatrix, rotation);
+//		BaseObject->display(projectionMatrix, viewMatrix, rotation);
 	t = t + 0.01;
 	if (t >= 1.0f) {
 		t = t - 1.0f;
@@ -569,13 +610,28 @@ void displayDirectional() {
 void updateJointPositions()
 {
 	float tx, ty, tz, rx, ry, rz;
+	auto updateTransforms = [](HierarchicalObject* p,float tx, float ty, float tz, float rx, float ry, float rz) { 
+		p->translate(tx, ty, tz);
+		p->rotate(rx, 1.0f, 0.0f, 0.0f); 
+		p->rotate(ry, 0.0f, 1.0f, 0.0f); 
+		p->rotate(rz, 0.0f, 0.0f, 1.0f); 
+	};
+
 	hipMotion(t, tx, ty, tz, rx, ry, rz);
 	pelvis->clearCurrentTransform();
 	pelvis->translate(tx, ty, tz);
 	pelvis->rotate(rx, 1.0f, 0.0f, 0.0f);
 	pelvis->rotate(ry, 0.0f, 1.0f, 0.0f);
 	pelvis->rotate(rz, 0.0f, 0.0f, 1.0f);
-
+	upperLeftLeg->clearCurrentTransform();
+	upperLeftLeg->translate(-1.0f, 0.0f, 0.0f);
+	leftUpperLegMotion(t, tx, ty, tz, rx, ry, rz);
+	updateTransforms(upperLeftLeg, tx, ty, tz, rx, ry, rz);
+     // remainder of this routine has been removed -- it is your project. 
+	upperRightLeg->clearCurrentTransform();
+	upperRightLeg->translate(1.0f, 0.0f, 0.0f);
+	leftUpperLegMotion(t, tx, ty, tz, rx, ry, rz);
+	updateTransforms(upperRightLeg, tx, ty, tz, rx, ry, rz);
 }
 
 /*
