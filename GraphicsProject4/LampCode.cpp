@@ -14,6 +14,13 @@ using namespace std;
 
 #define BUFFER_OFFSET(x)  ((const void*) (x))
 
+/*
+* @author Quinn Kleinfelter
+* Modified the existing sample code to also include movement of the right leg
+* Moved object files to a nice objects/ directory to clean up the file structure.
+* This directory should be at the same level as the source code
+*/
+
 GLuint programID;
 /*
 * Arrays to store the indices/names of the Vertex Array Objects and
@@ -190,66 +197,6 @@ void setAttributes(float lineWidth, GLenum face, GLenum fill) {
 	glPolygonMode(face, fill);
 	glEnable(GL_DEPTH_TEST);
 
-}
-
-/*
- * read and/or build the objects to be displayed.  Also sets up attributes that are
- * vertex related.  This builds the lamp in the version demonstrated in class.
- */
-
-void buildObjects() {
-
-	GLfloat* verticesBase;
-	GLfloat *normalsBase;
-
-	glGenVertexArrays(4, vertexBuffers);
-	glBindVertexArray(vertexBuffers[0]);
-
-/*
- * Read object in from obj file.
- */
-	
-	glGenBuffers(1, &(arrayBuffers[0]));
-	glBindBuffer(GL_ARRAY_BUFFER, arrayBuffers[0]);
-	GLfloat baseColor[] = { 0.7f, 0.7f, 0.7f, 1.0f };
-	verticesBase = readOBJFile("objects/base.obj", nbrTriangles[0], normalsBase);
-
-	BuildPart(nbrTriangles[0], nbrTriangles[0]*3 * 4, verticesBase, nbrTriangles[0]*3 * 3, normalsBase, baseColor);
-
-	GLfloat lowerArmColor[] = { 0.0f, 0.7f, 0.7f, 1.0f };
-	glBindVertexArray(vertexBuffers[1]);
-	glGenBuffers(1, &arrayBuffers[1]);
-	glBindBuffer(GL_ARRAY_BUFFER, arrayBuffers[1]);
-	verticesBase = readOBJFile("objects/lowerArm.obj", nbrTriangles[1], normalsBase);
-	BuildPart(nbrTriangles[1], nbrTriangles[1]*3*4, verticesBase, 
-		      nbrTriangles[1] * 3 * 3, normalsBase, lowerArmColor);
-
-	glBindVertexArray(vertexBuffers[2]);
-	glGenBuffers(1, &arrayBuffers[2]);
-	glBindBuffer(GL_ARRAY_BUFFER, arrayBuffers[2]);
-	GLfloat upperArmColor[] = { 0.7f, 0.0f, 0.7f, 1.0f };
-	verticesBase = readOBJFile("objects/upperArm.obj", nbrTriangles[2], normalsBase);
-	BuildPart(nbrTriangles[2], nbrTriangles[2] * 3 * 4, verticesBase,
-		nbrTriangles[2] * 3 * 3, normalsBase, upperArmColor);
-	glBindVertexArray(vertexBuffers[3]);
-	glGenBuffers(1, &arrayBuffers[3]);
-	glBindBuffer(GL_ARRAY_BUFFER, arrayBuffers[3]);
-	GLfloat lampColor[] = { 0.7f, 0.7f, 0.0f, 1.0f };
-	verticesBase = readOBJFile("objects/head.obj", nbrTriangles[3], normalsBase);
-	BuildPart(nbrTriangles[3], nbrTriangles[3] * 3 * 4, verticesBase,
-		nbrTriangles[3] * 3 * 3, normalsBase, lampColor);
-	
-	BaseObject = new HierarchicalObject(programID, vertexBuffers[0], arrayBuffers[0],nbrTriangles[0]*3);
-	lowerArmObject = new HierarchicalObject(programID, vertexBuffers[1], arrayBuffers[1],nbrTriangles[1]*3);
-	upperArmObject = new HierarchicalObject(programID, vertexBuffers[2], arrayBuffers[2],nbrTriangles[2]*3);
-	lampObject = new HierarchicalObject(programID, vertexBuffers[3], arrayBuffers[3],nbrTriangles[3]*3);
-
-	BaseObject->add(lowerArmObject);
-	lowerArmObject->add(upperArmObject);
-	upperArmObject->add(lampObject);
-	upperArmObject->translate(0.0f, 4.0f, 0.0f);
-	lowerArmObject->translate(0.0f, 1.0f, 0.0f);
-	lampObject->translate(0.0f, 3.0f, 0.0f);
 }
 
 /*
@@ -529,11 +476,6 @@ void init(string vertexShader, string fragmentShader) {
 	mat4x4_look_at(viewMatrix, vec3{ 0.0f, 0.0f, 10.0f }, vec3{ 0.0, 0.0, 0.0 }, vec3{ 0.0, 1.0, 0.0 });
 	mat4x4_ortho(projectionMatrix, -5.0f, 5.0f, -5.0f, 5.0f, -100.0f, 100.0f);
 #endif
-	/*
-	 *  This initializes either the skeleton or objects depending on what
-	 *  is commented out.  The Objects is the lamp we demonstrated in class.
-	 */
-//	buildObjects();
 	buildSkeleton();
 	getLocations();
 
@@ -587,14 +529,9 @@ void displayDirectional() {
 	glUniform3fv(halfVectorLocation, 1, halfVector);
 
 	if (motionOn) {
-//		BaseObject->clearCurrentTransform();
-// 		BaseObject->translate(3.0f * sin(t * 2 * 3.14159),
-//			0.0f,
-//			2.0 * cos(t * 2 * 3.14159));
     	updateJointPositions();
 	}
 	    pelvis->display(projectionMatrix, viewMatrix, rotation);
-//		BaseObject->display(projectionMatrix, viewMatrix, rotation);
 	t = t + 0.01;
 	if (t >= 1.0f) {
 		t = t - 1.0f;
@@ -627,7 +564,7 @@ void updateJointPositions()
 	upperLeftLeg->translate(-1.0f, 0.0f, 0.0f);
 	leftUpperLegMotion(t, tx, ty, tz, rx, ry, rz);
 	updateTransforms(upperLeftLeg, tx, ty, tz, rx, ry, rz);
-     // remainder of this routine has been removed -- it is your project. 
+	// added for project
 	upperRightLeg->clearCurrentTransform();
 	upperRightLeg->translate(1.0f, 0.0f, 0.0f);
 	leftUpperLegMotion(t, tx, ty, tz, rx, ry, rz);
