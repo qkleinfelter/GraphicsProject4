@@ -567,7 +567,7 @@ void updateJointPositions()
 	// added for project
 	upperRightLeg->clearCurrentTransform();
 	upperRightLeg->translate(1.0f, 0.0f, 0.0f);
-	leftUpperLegMotion(t, tx, ty, tz, rx, ry, rz);
+	rightUpperLegMotion(t, tx, ty, tz, rx, ry, rz);
 	updateTransforms(upperRightLeg, tx, ty, tz, rx, ry, rz);
 }
 
